@@ -510,9 +510,9 @@ De entre todos ellos (YAGNI, SoC, KISS, DRY, etc) los que más gente sigue son l
 - L: Liskov Substitution Principle (LSP)      Principio de Sustitución de Liskov
 - I: Interface Segregation Principle (ISP)    Principio de Segregación de Interfaces
 - D: Dependency Inversion Principle (DIP)     Principio de Inversión de Dependencias
-     Un componente (clase) de alto nivel de un sistema NUNCA debe de depender de una implementación concreta (clase) de un componente de bajo nivel. En su lugar ambos deben depender de una abstracción (interfaz=API).
+     Un componente (case) de alto nivel de un sistema NUNCA debe de depender de una implementación concreta (clase) de un componente de bajo nivel. En su lugar ambos deben depender de una abstracción (interfaz=API).
 
-
+l
 
        Diccionarios.App  -> Diccionarios.API <- Diccionarios.Ficheros
                   |                                      ^
