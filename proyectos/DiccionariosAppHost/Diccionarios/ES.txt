@@ -1,0 +1,8 @@
+melón=Fruto del melonero|Persona con pocas luces
+manzana=Fruto del manzano
+casa=Edificio para habitar|Familia o linaje
+árbol=Planta leñosa de gran tamaño
+perro=Animal doméstico
+gato=Felino doméstico
+libro=Conjunto de hojas escritas
+agua=Líquido transparente e inodoro

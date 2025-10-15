@@ -1,3 +1,4 @@
 melón=Fruto del melonero|Persona con pocas luces
 manzana=Fruto del manzano
+#archilococo= YA NO ESTA 
 Perro=Animal doméstico

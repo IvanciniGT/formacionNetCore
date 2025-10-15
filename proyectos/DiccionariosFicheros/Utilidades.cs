@@ -7,4 +7,12 @@ public static class Utilidades
         var rutaFicheroDiccionario = Path.Combine(rutaCarpetaDiccionarios, $"{idioma}.txt");
         return File.Exists(rutaFicheroDiccionario);
     }
+    
+    public static string NormalizarPalabra(string palabra)
+    {
+        if (string.IsNullOrEmpty(palabra))
+            return string.Empty;
+            
+        return palabra.Trim().ToUpperInvariant();
+    }
 }

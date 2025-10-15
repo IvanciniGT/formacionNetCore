@@ -2,7 +2,7 @@
 
 using DiccionariosFicheros;
 
-public class UnitTest1
+public class SuministradorDeDiccionariosDesdeFicherosTests
 {
     // Ese [Fact] es un atributo que podemos poner antes de una método para indicar que es un test
     // Cuando ejecutemos dotnet test, se ejecutarán todos los métodos que tengan ese atributo
