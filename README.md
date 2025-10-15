@@ -267,3 +267,70 @@ classDiagram
     DiccionariosAPI <|.. DiccionariosFicheros : Implementa
     UIAplicacionDeDiccionariosAPI <|.. UIAplicacionDeDiccionariosConsola : Implementa
 ```
+
+
+---
+
+Siguiente objetivo:
+
+Cambiar la implementación de SuministradorDeDiccionariosDesdeFicheros por una que trabaje con BBDD SQL.
+Para hacer ese trabajo vamos a tirar el Entity Framework Core (Esto es parte clave de .net Core).
+Esa librería me permite:
+- Mapear clases a tablas de BBDD... sin tener que escribir SQL
+- Para consultas muy específicas, puedo usar LINQ (Language Integrated Query) que es un lenguaje de consultas integrado en C#.
+- Para consultas muy específicas que no pueda hacer con LINQ, puedo escribir SQL directamente.
+- Me va a generar en automático el esquema de la BBDD a partir de las clases que yo le diga.
+- Y aplicará ese esquema a la BBDD que yo le diga (SQL Server, SQLite, MySQL, PostgreSQL, etc.)
+- Es más, si el día de mañana hay algun cambio en mis Entidades que voy a persistir, me genera las migraciones que necesito para actualizar el esquema de la BBDD sin perder los datos que ya tengo.... y los aplica a la BBDD que yo le diga.
+- LA UNICA FUENTE DE VERDAD será nuestro código C#. <<<<<<<< Y ESTO ES FLIPANTE!
+
+
+Antiguamente, nosotros teníamos que crear la BBDD, con sus tablas, sus relaciones, sus índices, etc.... en un script SQL.
+Y luego definíamos las clases C# que representaban los datos que teníamos en la BBDD.
+Y nos comíamos la escritura de queries para sacar los datos que necesitábamos y convertirlos en objetos C#.
+
+TODO ESO ES GRATIS con Entity Framework Core... Pero.. Esta librería no es nada especial. Ese concepto le tengo en todo lenguaje de programación moderno.
+- JAVA: JPA (Java Persistence API) con Hibernate
+- Python: SQLAlchemy
+...
+
+Este tipo de librerías, como Hibernate, SQLAlchemy o Entity Framework Core, se llaman ORM (Object-Relational Mapping) o Mapeo Objeto-Relacional. 
+No es sólo que me ahorren mucho trabajo, que lo hacen. 
+La gracia grande es otra, mucho más que las 500 horas que me voy a ahorrar escribirnedo queries.. transformando datos, etc.
+La gracia grande es que tengo una única fuente de verdad: Mi código C#.
+En ese fichero, declaro la estructura de mis datos en C# y la de la BBDD.
+No hay posibilidad de error o desincronización. PORQUE SOLO HAY UNA UNICA FUENTE DE VERDAD: MI CÓDIGO C#.
+Y la estructura de la BBDD queda atada (y sincronizada) a la estructura de mis clases C#.
+Y ESTO ES FLIPANTE! Y me evita una cantidad de problemas y errores brutales.
+
+Y por eso hoy en día es impensable trabajar sin un ORM en cualquier lenguaje de programación moderno.
+
+De alguna forma, lo que estamos es versionando en automático la estructura de la BBDD, junto con el código C#.
+
+---
+Proceso de trabajo (lo que vamos a hacer):
+1. Crear un proyecto nuevo de librería de clases, DiccionariosBBDD
+2. Añadir ese proyecto a la solución
+3. Añadir la referencia al proyecto DiccionariosAPI (porque esa librería va a implementar esa API)
+4. Añadir el paquete NuGet de Entity Framework Core (Microsoft.EntityFrameworkCore)
+5. Añadir el paquete NuGet del proveedor de BBDD que vayamos a usar (MariaDB, Postgres..). NI DE COÑA  quiero eso aquí.
+   Donde quiero esa configuración? A nivel del proyecto de la app host... la que INTEGRA COMPONENTES. SOLUCION FINAL!
+6. Crear las entidades que voy a persistir en la BBDD. Una entidad es una clase C# que representa objetos que quiero persistir en la BBDD.
+   En nuestro caso, las entidades son:
+   - Idioma
+   - Diccionarios
+   - Palabra
+   - Significado
+7. Crear el DbContext. El DbContext es la clase que representa la BBDD y me permite interactuar con ella.
+   // Cuando quiera guardar un diccionario, una palabra o un significado, lo haré a través del DbContext.
+   Cuando quiera obtener un diccionario, una palabra o un significado, lo haré a través del DbContext.
+8. Crear la implementación de ISuministradorDeDiccionarios, SuministradorDeDiccionariosDesdeBBDD
+   Esa clase usará el DbContext para obtener los datos que necesite... cómo se lo pasaremos?  Por inyección de dependencias.
+9. Crear un proyecto de pruebas para el proyecto DiccionariosBBDD.. que trabaje con una BBDD en memoria (SQLite en memoria)
+
+
+^^^^^^^ Es todo trabajo nuevo.
+
+10. Por último, cambiaremos en el proyecto host 2 cositas:
+   - Añadir las dependencias del nuevo proveedor de BBDD y del driver concreto (MariaDB, Postgres..)
+   - Modificar las propiedades de configuración para añadir la cadena de conexión a la BBDD... quitando el rollito de las carpetas.
