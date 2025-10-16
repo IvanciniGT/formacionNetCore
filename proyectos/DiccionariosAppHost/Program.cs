@@ -1,7 +1,9 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
+using Microsoft.EntityFrameworkCore;
 using DiccionariosAppHost;
+using DiccionariosBBDD;
 
 // Crear el Host Builder
 var hostBuilder = Host.CreateDefaultBuilder(args)
@@ -12,6 +14,14 @@ var hostBuilder = Host.CreateDefaultBuilder(args)
     })
     .ConfigureServices((context, services) =>
     {
+        // Configurar Entity Framework con SQLite
+        var connectionString = context.Configuration.GetConnectionString("DefaultConnection") ?? 
+                              context.Configuration["DiccionariosConfig:ConnectionString"] ?? 
+                              "Data Source=diccionarios.db";
+        
+        services.AddDbContext<DiccionariosDbContext>(options =>
+            options.UseSqlite(connectionString));
+
         // Auto-registro de dependencias: UI y Suministradores de Diccionarios
         services.AddAutoDiscoveredDependencies();
 

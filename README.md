@@ -334,3 +334,209 @@ Proceso de trabajo (lo que vamos a hacer):
 10. Por último, cambiaremos en el proyecto host 2 cositas:
    - Añadir las dependencias del nuevo proveedor de BBDD y del driver concreto (MariaDB, Postgres..)
    - Modificar las propiedades de configuración para añadir la cadena de conexión a la BBDD... quitando el rollito de las carpetas.
+
+
+
+---
+
+
+```csharp
+
+public class DiccionariosDbContext : DbContext
+{
+    public DbSet<IdiomaEntity> Idiomas { get; set; }
+    public DbSet<DiccionarioEntity> Diccionarios { get; set; }
+    public DbSet<PalabraEntity> Palabras { get; set; }
+    public DbSet<SignificadoEntity> Significados { get; set; }
+
+    public DiccionariosDbContext(DbContextOptions<DiccionariosDbContext> options) : base(options) { }
+}
+
+public class IdiomaEntity
+{
+    public int Id { get; set; }
+    public string Codigo { get; set; } = string.Empty;
+    public string Nombre { get; set; } = string.Empty;
+}
+
+public class DiccionarioEntity
+{
+    public int Id { get; set; }
+    public string Nombre { get; set; } = string.Empty;
+    public int IdiomaId { get; set; }
+}
+
+public class PalabraEntity
+{
+    public int Id { get; set; }
+    public string Texto { get; set; } = string.Empty;
+    public string TextoNormalizado { get; set; } = string.Empty;
+    public int DiccionarioId { get; set; }
+}
+
+public class SignificadoEntity
+{
+    public int Id { get; set; }
+    public string Texto { get; set; } = string.Empty;
+    public int PalabraId { get; set; }
+}
+
+```
+
+# Quiero ahora un diagrama de clases en mermaid: Con layout horizontal
+
+```mermaid
+classDiagram
+    direction LR
+    class DiccionariosDbContext {
+        +DbSet<IdiomaEntity> Idiomas
+        +DbSet<DiccionarioEntity> Diccionarios
+        +DbSet<PalabraEntity> Palabras
+        +DbSet<SignificadoEntity> Significados
+        +DiccionariosDbContext(options: DbContextOptions<DiccionariosDbContext>)
+    }
+    class IdiomaEntity {
+        +int Id    
+        +string Codigo
+        +string Nombre
+    }
+    class DiccionarioEntity {
+        +int Id
+        +string Nombre
+        +int IdiomaId
+    }
+    class PalabraEntity {
+        +int Id
+        +string Texto
+        +string TextoNormalizado
+        +int DiccionarioId
+    }
+    class SignificadoEntity {
+        +int Id
+        +string Texto
+        +int PalabraId
+    }   
+    DiccionariosDbContext "1" --> "many" IdiomaEntity : contiene
+    DiccionariosDbContext "1" --> "many" DiccionarioEntity : contiene
+    DiccionariosDbContext "1" --> "many" PalabraEntity : contiene
+    DiccionariosDbContext "1" --> "many" SignificadoEntity : contiene
+    IdiomaEntity "1" --> "many" DiccionarioEntity : tiene
+    DiccionarioEntity "1" --> "many" PalabraEntity : tiene
+    PalabraEntity "1" --> "many" SignificadoEntity : tiene
+    
+```
+
+
+Las clases que creamos en cualquier lenguaje de programación son de tipos diferentes... y están muy estudiadas por las arquitecturas de software:
+- Entidades: Representan objetos del mundo real que tienen identidad propia y ciclo de vida. Ejemplo: Usuario, Producto, Pedido.
+- Repositorios: Encapsulan la lógica para acceder a los datos de las entidades. Ejemplo: UsuarioRepositorio, ProductoRepositorio.
+- Servicios: Contienen la lógica de negocio que opera sobre las entidades. Ejemplo: UsuarioServicio, ProductoServicio.
+- Controladores: Manejan las solicitudes entrantes y coordinan la interacción entre los servicios y las vistas. Ejemplo: UsuarioControlador, ProductoControlador.
+- Vistas: Representan la interfaz de usuario y muestran los datos al usuario. Ejemplo: UsuarioVista, ProductoVista.
+- DTOs (Data Transfer Objects): Son objetos simples que se utilizan para transfer
+- Mappers: Son clases que se encargan de convertir entre diferentes tipos de objetos, como entre entidades y DTOs. Ejemplo: UsuarioMapper, ProductoMapper.
+
+# Quiero ahora ese mismo diagrama de clases, solo con las entidades y sus. relaciones
+
+```mermaid
+classDiagram
+    direction LR
+    class IdiomaEntity {
+        +int Id    
+        +string Codigo
+        +string Nombre
+    }
+    class DiccionarioEntity {
+        +int Id
+        +string Nombre
+        +int IdiomaId
+    }
+    class PalabraEntity {
+        +int Id
+        +string Texto
+        +string TextoNormalizado
+        +int DiccionarioId 
+    }
+    class SignificadoEntity {
+        +int Id
+        +string Texto
+        +int PalabraId
+    }   
+    IdiomaEntity "1" --> "many" DiccionarioEntity : tiene
+    DiccionarioEntity "1" --> "many" PalabraEntity : tiene
+    PalabraEntity "1" --> "many" SignificadoEntity : tiene  
+```
+
+Lo que hemos hecho es un diagrama ENTIDAD x RELACION, que es el que usamos habitualmente para diseñar BBDD relacionales.
+
+Mermaid  ofrece una representación adicional, más particular para BBDD... en horizontal:
+
+```mermaid
+erDiagram
+    direction LR
+    IDIOMA {
+        int Id PK
+        string Codigo
+        string Nombre
+    }
+    DICCIONARIO {
+        int Id PK
+        string Nombre
+        int IdiomaId FK
+    }
+    PALABRA {
+        int Id PK
+        string Texto
+        string TextoNormalizado
+        int DiccionarioId FK
+    }
+    SIGNIFICADO {
+        int Id PK
+        string Texto
+        int PalabraId FK
+    }
+    IDIOMA ||--o{ DICCIONARIO : tiene
+    DICCIONARIO ||--o{ PALABRA : tiene
+    PALABRA ||--o{ SIGNIFICADO : tiene
+```
+
+
+Por rendimiento, vamos a normalizar los códigos de Idiomas en  en mayúsculas... en BBDD ...
+
+Tenemos un campo código en la tabla Idiomas, que es un VARCHAR(5).
+Pero puedo yo asegurar que cualquiera (yo.. o no yo en el futuro) no vaya a meter un idioma en minúsculas?
+
+Que lo mismo alguien que está cargando datos en chino, coge y mete el idioma "ch" en minúsculas?
+Y mi programa deja de funcionar.
+
+Que solución le damos?
+Un INDICE en la BBDD.
+
+Qué es un índice en una BBDD?
+
+Es una copia ORDENADA de unos datos...
+Para qué me sirve: Para poder aplicar a la hora de una búsqueda un algoritmo de búsqueda binaria.
+Sin un índice, para hacer una búsqueda debo aplicar un FULL SCAN... es decir, en cristiano: Debo ir mirando todos y cada uno de los datos del conjunto de datos a ver si encajan con lo que busco.
+Uno a uno. Si tengo 1M de dato, cuantas comparaciones debo hacer? 1M
+
+20.000 -> 10.000 -> 5.000
+
+1M de datos, con busqueda binaria, cuantas comparaciones debo hacer? log2(1.000.000) = 20 comparaciones.
+
+Si vosotros tuvieseis que buscar zapatilla en un diccionario... abriríais el diccionario por la primera por la mitad? NO..,. por le final.. por qué? Porque sabéis como se distribuyen las palabras en el diccionario.... Y que la Z está al final... Pero sabéis más cosas.
+Cuántas palabras hay de la A? Muchas... y de la Z? Pocas.
+Si ya estoy en la Z... y me he pasao.. cuantas hojas atrás voy? Poquitas poquitas... 2, 3
+En cambio si estoy en la Abalorio.. y necesito llegar a Azabache... cuántas hojas adelante voy? Muuchas mas de 2 o 3.. por que de la A hay muchas palabras, muchas más que de la Z.
+
+Las BBDD no son gilipollas.. y hacen lo mismo.. Tienen un concepto que se llama ESTADISTICAS.
+
+Si tengo una columna de tipo int -> 4 bytes
+Si tengo 1M de datos -> 4MB
+Si tengo un índice sobre esa columna -> 4MB + 4MB = 8MB
+Pero la reladida es que el índice se crea con un coeficiente de llenado: El que quiera: 50%...
+En ese caso, en el fichero del índice se generan por cada entrada un hueco... para dejar espacio para futuras entradas. Y el índice en lugar de ocupar 4MB, ocupará 8MB.
+Y esa columna que ocupaba 4Mbs en la tabla, en la BBDD ahora ocupará 12MB.
+
+Me serviría crear un índice en la columna código de la tabla Idiomas, para ayudarnos con esto? NO
+Porque yo no uso el campo Codigo... uso UPPER(Codigo)...
+Y puedo tener el dato codigo en la tabla... pero crear un índice sobre UPPER(Codigo)?
