@@ -4,6 +4,9 @@ public interface IDiccionario
 {
     // Estamos definiendo una property de los diccionarios... que puede consultarse
     string Idioma { get; }
+    string Codigo {     // Esta implementación está aquí simplemente para asegurarnos que el resto del código sigue compilando
+        get => "DIC_" + Idioma;
+    }
 
     // Vamos a crear una función, para ver si un diccionario contiene una palabra 
     bool Existe(string palabra);
