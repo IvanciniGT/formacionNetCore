@@ -249,3 +249,15 @@ Modificar el componente de BBDD para que implemente estas nuevas funciones.
         GetSignificadosDeUnaPalabra
             -----> Libreria BBDD GetSignificadosDeUnaPalabra
             -----> ServicioDeMonitoreo.RegistrarConsulta
+
+---
+
+Por ahora, nos olvidaremos de lo que es la monitorización. Solo meteremos en las funciones del servicio las llamadas a la librería de Diccionarios.
+Las funciones que vamos a implementar en el servicio son:
+- GetIdiomas                                                List<IIdioma>
+- GetDiccionarios(idioma)                                   List<IDiccionario>         
+- GetDiccionario(codigoDiccionario)
+- GetSignificadosEnDiccionario(codigoDiccionario, palabra)
+- GetSignificadosEnIdioma(codigoIdioma, palabra)
+- ExistePalabraEnDiccionario(codigoDiccionario, palabra)
+- ExistePalabraEnIdioma(codigoIdioma, palabra)

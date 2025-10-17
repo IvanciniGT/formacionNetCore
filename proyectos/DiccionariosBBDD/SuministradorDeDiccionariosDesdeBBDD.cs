@@ -162,23 +162,27 @@ public class SuministradorDeDiccionariosDesdeBBDD : ISuministradorDeDiccionarios
         return new DiccionarioDesdeBBDD(_context, diccionarioEntity, diccionarioLogger);
     }
 
-    public IIdioma GetIdiomas()
+    public IList<IIdioma> GetIdiomas()
     {
         // Asegurar que la base de datos esté inicializada
         EnsureInitializedAsync().GetAwaiter().GetResult();
 
-        // NOTA: Este método tiene un diseño cuestionable en la interfaz, ya que retorna IIdioma en lugar de IList<IIdioma>
-        // Por compatibilidad, retornamos el primer idioma encontrado
-        var primerIdioma = _context.Idiomas.FirstOrDefault();
+        var idiomasEntity = _context.Idiomas.ToList();
 
-        if (primerIdioma == null)
+        if (!idiomasEntity.Any())
         {
             _logger.LogWarning("No se encontraron idiomas en la base de datos");
-            throw new InvalidOperationException("No hay idiomas disponibles en la base de datos");
+            return new List<IIdioma>();
         }
 
-        _logger.LogDebug("Retornando primer idioma: {Codigo} - {Nombre}", primerIdioma.Codigo, primerIdioma.Nombre);
+        var idiomas = new List<IIdioma>();
+        foreach (var idiomaEntity in idiomasEntity)
+        {
+            idiomas.Add(new IdiomaDesdeBBDD(idiomaEntity));
+        }
+
+        _logger.LogInformation("Retornando {Count} idiomas disponibles", idiomas.Count);
         
-        return new IdiomaDesdeBBDD(primerIdioma);
+        return idiomas;
     }
 }

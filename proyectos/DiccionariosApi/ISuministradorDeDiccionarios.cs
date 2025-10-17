@@ -35,7 +35,7 @@ public interface ISuministradorDeDiccionarios
         return null;
     }
 
-    IIdioma GetIdiomas()
+    IList<IIdioma> GetIdiomas()
     {
         throw new NotImplementedException("Este método debe ser implementado por la clase que implemente esta interfaz.");
     }

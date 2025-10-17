@@ -273,15 +273,24 @@ public class SuministradorDeDiccionariosDesdeBBDDTests : IDisposable
     }
 
     [Fact]
-    public void GetIdiomas_DeberiaRetornarPrimerIdioma()
+    public void GetIdiomas_DeberiaRetornarTodosLosIdiomas()
     {
         // Act
-        var idioma = _suministrador.GetIdiomas();
+        var idiomas = _suministrador.GetIdiomas();
 
         // Assert
-        Assert.NotNull(idioma);
-        Assert.Equal("ES", idioma.Codigo); // Esperamos que retorne el primer idioma (Español)
-        Assert.Equal("Español", idioma.Nombre);
+        Assert.NotNull(idiomas);
+        Assert.Equal(2, idiomas.Count); // Esperamos ES y EN en nuestros datos de prueba
+        
+        var codigos = idiomas.Select(i => i.Codigo).ToList();
+        Assert.Contains("ES", codigos);
+        Assert.Contains("EN", codigos);
+        
+        var espa = idiomas.First(i => i.Codigo == "ES");
+        Assert.Equal("Español", espa.Nombre);
+        
+        var eng = idiomas.First(i => i.Codigo == "EN");
+        Assert.Equal("English", eng.Nombre);
     }
 
     [Fact]
