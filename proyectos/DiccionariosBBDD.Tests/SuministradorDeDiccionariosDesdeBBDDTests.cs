@@ -51,43 +51,65 @@ public class SuministradorDeDiccionariosDesdeBBDDTests : IDisposable
 
     private void SembrarDatosDePrueba()
     {
-        // Crear idioma
-        var idioma = new IdiomaEntity { Codigo = "ES", Nombre = "Español" };
-        _context.Idiomas.Add(idioma); // Internamente esto es lo que se traduce a INSERT
-        // INSERT INTO Idiomas (Codigo, Nombre) VALUES ('ES', 'Español');
-
-        // Crear diccionario
-        var diccionario = new DiccionarioEntity { IdiomaId = idioma.Id, Nombre = "Diccionario Español" };
-        _context.Diccionarios.Add(diccionario);
-        // INSERT INTO Diccionarios (IdiomaId, Nombre) VALUES (1, 'Diccionario Español');
-
-        // Crear palabra con significados
-        var palabra = new PalabraEntity 
-        { 
-            Texto = "casa", 
-            // TextoNormalizado eliminado - usamos índice funcional UPPER(Texto)
-            DiccionarioId = diccionario.Id 
+        // Crear idiomas de prueba
+        var idiomas = new[]
+        {
+            new IdiomaEntity { Codigo = "ES", Nombre = "Español" },
+            new IdiomaEntity { Codigo = "EN", Nombre = "English" }
         };
-        _context.Palabras.Add(palabra);
-        // INSERT INTO Palabras (Texto, DiccionarioId) VALUES ('casa', 1);
-
-        var significado1 = new SignificadoEntity 
-        { 
-            Texto = "Edificio para habitar", 
-            PalabraId = palabra.Id 
-        };
-        var significado2 = new SignificadoEntity 
-        { 
-            Texto = "Familia o linaje", 
-            PalabraId = palabra.Id 
-        };
-        
-        _context.Significados.AddRange(significado1, significado2);
-        
+        _context.Idiomas.AddRange(idiomas);
         _context.SaveChanges();
-        
-        // Crear índices funcionales para aprovechar UPPER() en queries
-        _context.CreateFunctionalIndexes();
+
+        // Crear múltiples diccionarios por idioma con códigos específicos
+        var diccionarios = new[]
+        {
+            new DiccionarioEntity { IdiomaId = idiomas[0].Id, Nombre = "Diccionario RAE", Codigo = "ES_RAE" },
+            new DiccionarioEntity { IdiomaId = idiomas[0].Id, Nombre = "Diccionario Larousse", Codigo = "ES_LAROUSSE" },
+            new DiccionarioEntity { IdiomaId = idiomas[1].Id, Nombre = "Oxford Dictionary", Codigo = "EN_OXFORD" }
+        };
+        _context.Diccionarios.AddRange(diccionarios);
+        _context.SaveChanges();
+
+        // Crear palabras de prueba - algunas comunes entre diccionarios del mismo idioma
+        var palabras = new[]
+        {
+            // Palabras COMUNES en español (en ambos diccionarios)
+            new PalabraEntity { Texto = "casa", DiccionarioId = diccionarios[0].Id }, // ES_RAE
+            new PalabraEntity { Texto = "casa", DiccionarioId = diccionarios[1].Id }, // ES_LAROUSSE
+            new PalabraEntity { Texto = "agua", DiccionarioId = diccionarios[0].Id }, // ES_RAE
+            new PalabraEntity { Texto = "agua", DiccionarioId = diccionarios[1].Id }, // ES_LAROUSSE
+            
+            // Palabras ESPECÍFICAS por diccionario
+            new PalabraEntity { Texto = "hidalgo", DiccionarioId = diccionarios[0].Id }, // Solo en ES_RAE
+            new PalabraEntity { Texto = "champán", DiccionarioId = diccionarios[1].Id }, // Solo en ES_LAROUSSE
+            
+            // Palabras en inglés
+            new PalabraEntity { Texto = "house", DiccionarioId = diccionarios[2].Id } // EN_OXFORD
+        };
+        _context.Palabras.AddRange(palabras);
+        _context.SaveChanges();
+
+        // Crear significados para las palabras
+        var significados = new[]
+        {
+            // Significados para "casa" en ES_RAE
+            new SignificadoEntity { Texto = "Edificio para habitar", PalabraId = palabras[0].Id },
+            new SignificadoEntity { Texto = "Familia o linaje", PalabraId = palabras[0].Id },
+            
+            // Significados para "casa" en ES_LAROUSSE
+            new SignificadoEntity { Texto = "Vivienda familiar", PalabraId = palabras[1].Id },
+            
+            // Significados para "agua" en ES_RAE
+            new SignificadoEntity { Texto = "Líquido inodoro, incoloro e insípido", PalabraId = palabras[2].Id },
+            
+            // Significados para "hidalgo" (solo ES_RAE)
+            new SignificadoEntity { Texto = "Persona de noble linaje", PalabraId = palabras[4].Id },
+            
+            // Significados para "house" en inglés
+            new SignificadoEntity { Texto = "A building for human habitation", PalabraId = palabras[6].Id }
+        };
+        _context.Significados.AddRange(significados);
+        _context.SaveChanges();
         
         // Crear índices funcionales para optimización de búsquedas case-insensitive
         _context.CreateFunctionalIndexes();
@@ -169,16 +191,156 @@ public class SuministradorDeDiccionariosDesdeBBDDTests : IDisposable
         bool existeInexistente = diccionario.Existe("palabrainexistente");
         Assert.False(existeInexistente, "Una palabra inexistente no debería existir");
 
-        // Probar obtener significados
+        // Probar obtener significados (puede ser de cualquier diccionario español)
         var significados = diccionario.GetSignificados("casa");
         Assert.NotNull(significados);
-        Assert.Equal(2, significados.Count);
-        Assert.Contains("Edificio para habitar", significados);
-        Assert.Contains("Familia o linaje", significados);
+        Assert.True(significados.Count > 0, "Debería haber al menos un significado para 'casa'");
+        
+        // Verificar que al menos uno de los significados conocidos está presente
+        bool tieneSignificadoConocido = significados.Any(s => 
+            s.Contains("Edificio") || s.Contains("Vivienda") || s.Contains("habitar") || s.Contains("familiar"));
+        Assert.True(tieneSignificadoConocido, "Debería contener un significado conocido para 'casa'");
 
         // Probar obtener significados de palabra inexistente
         var significadosInexistentes = diccionario.GetSignificados("palabrainexistente");
         Assert.Null(significadosInexistentes);
+    }
+
+    // ===== TESTS PARA NUEVOS MÉTODOS API v1.1.0 =====
+
+    [Fact]
+    public void GetDiccionarios_ConIdiomaExistente_DeberiaRetornarMultiplesDiccionarios()
+    {
+        // Arrange
+        string idioma = "ES";
+
+        // Act
+        var diccionarios = _suministrador.GetDiccionarios(idioma);
+
+        // Assert
+        Assert.NotNull(diccionarios);
+        Assert.Equal(2, diccionarios.Count); // Esperamos ES_RAE y ES_LAROUSSE
+        
+        var codigos = diccionarios.Select(d => d.Codigo).ToList();
+        Assert.Contains("ES_RAE", codigos);
+        Assert.Contains("ES_LAROUSSE", codigos);
+    }
+
+    [Fact]
+    public void GetDiccionarios_ConIdiomaInexistente_DeberiaRetornarNull()
+    {
+        // Arrange
+        string idioma = "FR"; // No existe en nuestros datos de prueba
+
+        // Act
+        var diccionarios = _suministrador.GetDiccionarios(idioma);
+
+        // Assert
+        Assert.Null(diccionarios);
+    }
+
+    [Fact]
+    public void GetDiccionarioPorCodigo_ConCodigoExistente_DeberiaRetornarDiccionarioEspecifico()
+    {
+        // Arrange
+        string codigo = "ES_RAE";
+
+        // Act
+        var diccionario = _suministrador.GetDiccionarioPorCodigo(codigo);
+
+        // Assert
+        Assert.NotNull(diccionario);
+        Assert.Equal("ES_RAE", diccionario.Codigo);
+        Assert.Equal("ES", diccionario.Idioma);
+        
+        // Verificar funcionalidad básica del diccionario
+        Assert.True(diccionario.Existe("casa"));
+        Assert.True(diccionario.Existe("hidalgo")); // Palabra específica de RAE
+        Assert.False(diccionario.Existe("champán")); // No debe estar en RAE
+    }
+
+    [Fact]
+    public void GetDiccionarioPorCodigo_ConCodigoInexistente_DeberiaRetornarNull()
+    {
+        // Arrange
+        string codigo = "FR_INEXISTENTE";
+
+        // Act
+        var diccionario = _suministrador.GetDiccionarioPorCodigo(codigo);
+
+        // Assert
+        Assert.Null(diccionario);
+    }
+
+    [Fact]
+    public void GetIdiomas_DeberiaRetornarPrimerIdioma()
+    {
+        // Act
+        var idioma = _suministrador.GetIdiomas();
+
+        // Assert
+        Assert.NotNull(idioma);
+        Assert.Equal("ES", idioma.Codigo); // Esperamos que retorne el primer idioma (Español)
+        Assert.Equal("Español", idioma.Nombre);
+    }
+
+    [Fact]
+    public void Diccionario_Codigo_DeberiaRetornarCodigoEspecifico()
+    {
+        // Arrange & Act
+        var diccionarios = _suministrador.GetDiccionarios("ES");
+        
+        // Assert
+        Assert.NotNull(diccionarios);
+        
+        foreach (var diccionario in diccionarios)
+        {
+            // Verificar que el código NO es el por defecto "DIC_ES"
+            Assert.NotEqual("DIC_ES", diccionario.Codigo);
+            
+            // Verificar que es uno de los códigos específicos
+            Assert.True(diccionario.Codigo == "ES_RAE" || diccionario.Codigo == "ES_LAROUSSE",
+                $"Código inesperado: {diccionario.Codigo}");
+        }
+    }
+
+    [Fact]
+    public void PalabrasComunes_DeberianExistirEnMultiplesDiccionarios()
+    {
+        // Arrange
+        var diccionarios = _suministrador.GetDiccionarios("ES");
+        Assert.NotNull(diccionarios);
+        Assert.Equal(2, diccionarios.Count);
+
+        // Act & Assert - Verificar que "casa" existe en ambos diccionarios
+        foreach (var diccionario in diccionarios)
+        {
+            bool existeCasa = diccionario.Existe("casa");
+            Assert.True(existeCasa, $"La palabra 'casa' debería existir en {diccionario.Codigo}");
+            
+            var significados = diccionario.GetSignificados("casa");
+            Assert.NotNull(significados);
+            Assert.True(significados.Count > 0, $"'casa' debería tener significados en {diccionario.Codigo}");
+        }
+    }
+
+    [Fact]
+    public void PalabrasEspecificas_DeberianExistirSoloEnSuDiccionario()
+    {
+        // Arrange
+        var diccionarios = _suministrador.GetDiccionarios("ES");
+        Assert.NotNull(diccionarios);
+        
+        var dicRae = diccionarios.First(d => d.Codigo == "ES_RAE");
+        var dicLarousse = diccionarios.First(d => d.Codigo == "ES_LAROUSSE");
+
+        // Act & Assert - "hidalgo" solo debe existir en RAE
+        Assert.True(dicRae.Existe("hidalgo"), "hidalgo debería existir en ES_RAE");
+        Assert.False(dicLarousse.Existe("hidalgo"), "hidalgo NO debería existir en ES_LAROUSSE");
+
+        // Act & Assert - "champán" solo debe existir en Larousse
+        Assert.False(dicRae.Existe("champán"), "champán NO debería existir en ES_RAE");
+        Assert.True(dicLarousse.Existe("champán"), "champán debería existir en ES_LAROUSSE");
     }
 
 }

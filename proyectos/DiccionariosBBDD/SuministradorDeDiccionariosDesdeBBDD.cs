@@ -98,4 +98,87 @@ public class SuministradorDeDiccionariosDesdeBBDD : ISuministradorDeDiccionarios
 
         return new DiccionarioDesdeBBDD(_context, diccionarioEntity, diccionarioLogger);
     }
+
+    public IList<IDiccionario>? GetDiccionarios(string codigoIdioma)
+    {
+        if (string.IsNullOrEmpty(codigoIdioma)) return null;
+
+        // Asegurar que la base de datos esté inicializada
+        EnsureInitializedAsync().GetAwaiter().GetResult();
+
+        var codigoIdiomaUpper = codigoIdioma.ToUpperInvariant();
+
+        var diccionariosEntity = _context.Diccionarios
+            .Include(d => d.Idioma)
+            .Where(d => d.Idioma.Codigo.ToUpper() == codigoIdiomaUpper)
+            .ToList();
+
+        if (!diccionariosEntity.Any())
+        {
+            _logger.LogWarning("No se encontraron diccionarios para el idioma '{Idioma}'", codigoIdioma);
+            return null;
+        }
+
+        _logger.LogInformation("Encontrados {Count} diccionarios para el idioma '{Idioma}'", 
+            diccionariosEntity.Count, codigoIdioma);
+
+        var diccionarios = new List<IDiccionario>();
+        foreach (var diccionarioEntity in diccionariosEntity)
+        {
+            var diccionarioLogger = _logger as ILogger<DiccionarioDesdeBBDD> ??
+                Microsoft.Extensions.Logging.Abstractions.NullLogger<DiccionarioDesdeBBDD>.Instance;
+            
+            diccionarios.Add(new DiccionarioDesdeBBDD(_context, diccionarioEntity, diccionarioLogger));
+        }
+
+        return diccionarios;
+    }
+
+    public IDiccionario? GetDiccionarioPorCodigo(string codigoDiccionario)
+    {
+        if (string.IsNullOrEmpty(codigoDiccionario)) return null;
+
+        // Asegurar que la base de datos esté inicializada
+        EnsureInitializedAsync().GetAwaiter().GetResult();
+
+        var codigoUpper = codigoDiccionario.ToUpperInvariant();
+
+        var diccionarioEntity = _context.Diccionarios
+            .Include(d => d.Idioma)
+            .FirstOrDefault(d => d.Codigo.ToUpper() == codigoUpper);
+
+        if (diccionarioEntity == null)
+        {
+            _logger.LogWarning("No se encontró diccionario con código '{Codigo}'", codigoDiccionario);
+            return null;
+        }
+
+        _logger.LogInformation("Diccionario encontrado con código '{Codigo}': {Nombre}",
+            codigoDiccionario, diccionarioEntity.Nombre);
+
+        var diccionarioLogger = _logger as ILogger<DiccionarioDesdeBBDD> ??
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<DiccionarioDesdeBBDD>.Instance;
+
+        return new DiccionarioDesdeBBDD(_context, diccionarioEntity, diccionarioLogger);
+    }
+
+    public IIdioma GetIdiomas()
+    {
+        // Asegurar que la base de datos esté inicializada
+        EnsureInitializedAsync().GetAwaiter().GetResult();
+
+        // NOTA: Este método tiene un diseño cuestionable en la interfaz, ya que retorna IIdioma en lugar de IList<IIdioma>
+        // Por compatibilidad, retornamos el primer idioma encontrado
+        var primerIdioma = _context.Idiomas.FirstOrDefault();
+
+        if (primerIdioma == null)
+        {
+            _logger.LogWarning("No se encontraron idiomas en la base de datos");
+            throw new InvalidOperationException("No hay idiomas disponibles en la base de datos");
+        }
+
+        _logger.LogDebug("Retornando primer idioma: {Codigo} - {Nombre}", primerIdioma.Codigo, primerIdioma.Nombre);
+        
+        return new IdiomaDesdeBBDD(primerIdioma);
+    }
 }

@@ -18,6 +18,7 @@ public class DiccionarioDesdeBBDD : IDiccionario
     }
 
     public string Idioma => _diccionarioEntity.Idioma.Codigo;
+    public string Codigo => _diccionarioEntity.Codigo;
 
     public bool Existe(string palabra)
     {
