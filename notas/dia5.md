@@ -254,10 +254,102 @@ Modificar el componente de BBDD para que implemente estas nuevas funciones.
 
 Por ahora, nos olvidaremos de lo que es la monitorización. Solo meteremos en las funciones del servicio las llamadas a la librería de Diccionarios.
 Las funciones que vamos a implementar en el servicio son:
-- GetIdiomas                                                List<IIdioma>
-- GetDiccionarios(idioma)                                   List<IDiccionario>         
-- GetDiccionario(codigoDiccionario)
-- GetSignificadosEnDiccionario(codigoDiccionario, palabra)
-- GetSignificadosEnIdioma(codigoIdioma, palabra)
-- ExistePalabraEnDiccionario(codigoDiccionario, palabra)
-- ExistePalabraEnIdioma(codigoIdioma, palabra)
+- GetIdiomas                                                List<IdiomaDTO>
+- GetDiccionarios(idioma)                                   List<DiccionarioDTO>?         
+- GetDiccionario(codigoDiccionario)                         DiccionarioDTO?
+- GetSignificadosEnDiccionario(codigoDiccionario, palabra)  List<SignificadoDTO>?
+- GetSignificadosEnIdioma(codigoIdioma, palabra)            List<SignificadoDTO>?
+- ExistePalabraEnDiccionario(codigoDiccionario, palabra)    bool
+- ExistePalabraEnIdioma(codigoIdioma, palabra)              bool
+
+
+Lo que hacemos al generar esa nueva interfaz IdiomaDTO, muy similar a IIdioma es:
+- Cumplir con el principio de segregación de interfaces (ISP): Mejor tener muchas interfaces específicas que pocas y genéricas.
+- Aislarnos de cambios en la el el API de diccioanrios (y poe ende de cambios en la BBDD) . Si el día de mañana ese modulo cambia (como ha cambiado hoy v1.0.0->v1.1.0) no afectará a los consumidores del servicio.
+
+Para pasar de objetos de tipo IdiomaEntity a IdiomaDTO, creamos un mapeador con una libreria llamada AutoMapper.
+
+POR AHORA SOLO MONTAMOS LA CAPA DE SERVICIO, NO LA DE CONTROLADOR... es decir, no estamos montando un servicio REST, estamos montando un servicio C#. En ese servicio, como decía, las funciones deben llamar a las de DiccionariosAPI.. pero además, deberian registrar informacion en un servicio de monitorizacion. Servicio que a dia de hoy no tenemos, y lo unico que vamos a hacer es añadir comentarios en el código indicando donde irian esas llamadas.
+
+Por supuesto, este servicio, tendra su API y su implementación, en proyectos C# independientes dentro de la solución.
+
+
+---
+
+
+# Capa de controlador REST (ASP.NET Core Web API) que exponga esas funciones a través de HTTP.
+
+Este va a ser un proyecto nuevo, con ASP .NET Core Web API.
+
+En estos proyectos, vamos a usar ese concepto de la Inversion De Control y la inyección de dependencias que ya hemos visto en otras capas/proyectos de nuestra solución (DiccionariosAppHost). Pero en otros proyecto lo hemos hecho a través de un host genérico (Clase que nos da C#.
+
+En estos proyectos, eso también ocurre... pero queda enmascarado por el framework ASP.NET Core, que nos da un objeto WebApplicationBuilder en el que podemos registrar servicios y luego construir un WebApplication que es el que atiende las peticiones HTTP.
+
+```csharp
+var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddSingleton<ISuministradorDeDiccionarios, SuministradorDeDiccionariosDesdeBBDD>();
+builder.Services.AddSingleton<IServicioDiccionarios, ServicioDiccionariosImpl>();
+
+var app = builder.Build(); // Por debajo esto usa el patrón Host que ya conocemos
+// Pero ya no tenemos ni que crearlo.
+
+// CREAMOS UN CONTROLADOR COMPLETO
+
+// Esto se llama Atributos en C#.
+// En concreto ASP.NET Core usa estos atributos para definir rutas y comportamientos de los controladores REST
+[ApiController]
+[Route("api/v1/[controller]")]
+public class DiccionariosController : ControllerBase
+{
+    private readonly IServicioDiccionarios _servicioDiccionarios;
+
+    public DiccionariosController(IServicioDiccionarios servicioDiccionarios)
+    {
+        _servicioDiccionarios = servicioDiccionarios;
+    }
+
+    [HttpGet()]
+    public ActionResult<IList<IdiomaDTO>> GetIdiomas()
+    {
+        var idiomas = _servicioDiccionarios.GetIdiomas();
+        return Ok(idiomas); // Aqui necesitaremos un nuevo mapeador de IdiomaDTO a IdiomaRestV1DTO
+    }
+
+    // Más acciones para los otros casos de uso...
+}
+
+// Controlando las posibles excepciones y devolviendo códigos HTTP adecuados.
+```
+
+
+- GetIdiomas                                                List<IdiomaDTO>
+        vvvvv
+    /api/v1/idiomas                                         List<IdiomaRestV1DTO>
+- GetDiccionarios(idioma)                                   List<DiccionarioDTO>?         
+        vvvvv
+    /api/v1/idiomas/{codigoIdioma}/diccionarios             List<DiccionarioRestV1DTO>
+    Si el idioma no existe, devolvemos 404 Not Found
+- GetDiccionario(codigoDiccionario)                         DiccionarioDTO?
+        vvvvv
+    /api/v1/diccionarios/{codigoDiccionario}                DiccionarioRestV1DTO
+    Si el diccionario no existe, devolvemos 404 Not Found 
+- GetSignificadosEnDiccionario(codigoDiccionario, palabra)  List<SignificadoDTO>?
+        vvvvv
+    /api/v1/diccionarios/{codigoDiccionario}/significados?palabra={palabra}   List<SignificadoRestV1DTO>
+    Si el diccionario no existe, devolvemos 404 Not Found 
+    Si la palabra no existe, devolvemos 404 Not Found 
+- GetSignificadosEnIdioma(codigoIdioma, palabra)            List<SignificadoDTO>?
+        vvvvv
+    /api/v1/idiomas/{codigoIdioma}/significados?palabra={palabra}   List<SignificadoRestV1DTO>
+    Si el idioma no existe, devolvemos 404 Not Found 
+    Si la palabra no existe, devolvemos 404 Not Found
+- ExistePalabraEnDiccionario(codigoDiccionario, palabra)    bool
+        vvvvv
+    /api/v1/diccionarios/{codigoDiccionario}/existe?palabra={palabra}   NADA
+    Código HTTP 200 si existe, 404 si no existe
+- ExistePalabraEnIdioma(codigoIdioma, palabra)              bool
+        vvvvv
+    /api/v1/idiomas/{codigoIdioma}/existe?palabra={palabra}   NADA . 
+    Código HTTP 200 si existe, 404 si no existe
+    
+    

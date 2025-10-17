@@ -7,6 +7,9 @@ public interface IDiccionario
     string Codigo {     // Esta implementación está aquí simplemente para asegurarnos que el resto del código sigue compilando
         get => "DIC_" + Idioma;
     }
+    string Nombre {     // v1.2.0 - Implementación por defecto para compatibilidad hacia atrás
+        get => "Diccionario " + Codigo;
+    }
 
     // Vamos a crear una función, para ver si un diccionario contiene una palabra 
     bool Existe(string palabra);

@@ -1,0 +1,24 @@
+@DiccionariosWebApi_HostAddress = http://localhost:5161
+
+# Test obtener todos los idiomas
+GET {{DiccionariosWebApi_HostAddress}}/api/v1/idiomas
+Accept: application/json
+
+###
+
+# Test obtener diccionarios de un idioma específico
+GET {{DiccionariosWebApi_HostAddress}}/api/v1/idiomas/ES/diccionarios
+Accept: application/json
+
+###
+
+# Test verificar si existe un diccionario
+HEAD {{DiccionariosWebApi_HostAddress}}/api/v1/diccionarios/ES_COMUN/existe
+
+###
+
+# Test obtener significados por diccionario
+GET {{DiccionariosWebApi_HostAddress}}/api/v1/diccionarios/ES_COMUN/significados?palabra=hola
+Accept: application/json
+
+###

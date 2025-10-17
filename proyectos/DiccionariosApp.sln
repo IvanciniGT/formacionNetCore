@@ -23,6 +23,14 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DiccionariosBBDD.Tests", "D
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DiccionariosBBDD", "DiccionariosBBDD\DiccionariosBBDD.csproj", "{A53A756B-0585-4D3B-B779-F846DCA2D2D9}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServicioDiccionarios", "ServicioDiccionarios\ServicioDiccionarios.csproj", "{B1E8F2A5-7C3D-4F9A-A8B1-2E5F6C9D3A7B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServicioDiccionarios.Implementacion", "ServicioDiccionarios.Implementacion\ServicioDiccionarios.Implementacion.csproj", "{C2F9E3B6-8D4E-5A0B-B9C2-3F6E7D0E4B8C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServicioDiccionarios.Tests", "ServicioDiccionarios.Tests\ServicioDiccionarios.Tests.csproj", "{D3EA04C7-9E5F-6B1C-CA03-4F7E8E1F5C9D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DiccionariosWebApi", "DiccionariosWebApi\DiccionariosWebApi.csproj", "{95849FCA-F5C7-40F3-9992-38850490AD8C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -153,6 +161,18 @@ Global
 		{A53A756B-0585-4D3B-B779-F846DCA2D2D9}.Release|x64.Build.0 = Release|Any CPU
 		{A53A756B-0585-4D3B-B779-F846DCA2D2D9}.Release|x86.ActiveCfg = Release|Any CPU
 		{A53A756B-0585-4D3B-B779-F846DCA2D2D9}.Release|x86.Build.0 = Release|Any CPU
+		{95849FCA-F5C7-40F3-9992-38850490AD8C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{95849FCA-F5C7-40F3-9992-38850490AD8C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{95849FCA-F5C7-40F3-9992-38850490AD8C}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{95849FCA-F5C7-40F3-9992-38850490AD8C}.Debug|x64.Build.0 = Debug|Any CPU
+		{95849FCA-F5C7-40F3-9992-38850490AD8C}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{95849FCA-F5C7-40F3-9992-38850490AD8C}.Debug|x86.Build.0 = Debug|Any CPU
+		{95849FCA-F5C7-40F3-9992-38850490AD8C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{95849FCA-F5C7-40F3-9992-38850490AD8C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{95849FCA-F5C7-40F3-9992-38850490AD8C}.Release|x64.ActiveCfg = Release|Any CPU
+		{95849FCA-F5C7-40F3-9992-38850490AD8C}.Release|x64.Build.0 = Release|Any CPU
+		{95849FCA-F5C7-40F3-9992-38850490AD8C}.Release|x86.ActiveCfg = Release|Any CPU
+		{95849FCA-F5C7-40F3-9992-38850490AD8C}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
